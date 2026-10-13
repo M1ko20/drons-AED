@@ -1,0 +1,125 @@
+{
+  "_about": "Výjezdové základny ZZS v rozsahu dat. Seznam základen a posádek: web ZZS MSK (zzsmsk.cz, „O nás“). Adresy: registr poskytovatelů Ministerstva zdravotnictví (akreditace.mzcr.cz/poskytovatele/view/45617). Souřadnice: geokódováno službou OSM Nominatim 13. 10. 2026. Základny Zlínského kraje pocházejí z firemního katalogu a z OSM, mají nižší spolehlivost a jejich seznam je neúplný.",
+  "stations": [
+    {
+      "name": "ZZS MSK Frýdek-Místek",
+      "address": "El. Krásnohorské 322, Frýdek-Místek",
+      "crews": "1 RV, 2 RZP",
+      "lon": 18.35643,
+      "lat": 49.69102,
+      "confidence": "oficiální seznam + adresa z registru MZ"
+    },
+    {
+      "name": "ZZS MSK Nošovice (IVC)",
+      "address": "Hyundai 155/4, Nošovice",
+      "crews": "1 RZP",
+      "lon": 18.43737,
+      "lat": 49.67016,
+      "confidence": "oficiální seznam + adresa z registru MZ"
+    },
+    {
+      "name": "ZZS MSK Frýdlant nad Ostravicí",
+      "address": "Ondřejnická 896, Frýdlant nad Ostravicí",
+      "crews": "1 RZP",
+      "lon": 18.3458,
+      "lat": 49.58932,
+      "confidence": "oficiální seznam + adresa z registru MZ"
+    },
+    {
+      "name": "ZZS MSK Mošnov",
+      "address": "Gen. Fajtla 418, Mošnov",
+      "crews": "1 RLP",
+      "lon": 18.11418,
+      "lat": 49.69236,
+      "confidence": "oficiální seznam + adresa z registru MZ"
+    },
+    {
+      "name": "ZZS MSK Třinec",
+      "address": "Kaštanová 413, Třinec",
+      "crews": "1 RLP, 2 RZP",
+      "lon": 18.69049,
+      "lat": 49.6759,
+      "confidence": "oficiální seznam + adresa z registru MZ"
+    },
+    {
+      "name": "ZZS MSK Jablunkov",
+      "address": "Bukovecká 615, Jablunkov",
+      "crews": "1 RZP",
+      "lon": 18.77139,
+      "lat": 49.57026,
+      "confidence": "oficiální seznam + adresa z registru MZ"
+    },
+    {
+      "name": "ZZS MSK Český Těšín",
+      "address": "Třanovského 1944/2a, Český Těšín",
+      "crews": "1 RZP",
+      "lon": 18.62376,
+      "lat": 49.74938,
+      "confidence": "oficiální seznam; poloha podle bodu základny v OSM (adresu se nepodařilo geokódovat)"
+    },
+    {
+      "name": "ZZS MSK Nový Jičín",
+      "address": "Štefánikova 2111/11, Nový Jičín",
+      "crews": "1 RV, 2 RZP",
+      "lon": 18.00732,
+      "lat": 49.59598,
+      "confidence": "oficiální seznam + adresa z registru MZ"
+    },
+    {
+      "name": "ZZS MSK Frenštát pod Radhoštěm",
+      "address": "Záhuní 401, Frenštát pod Radhoštěm",
+      "crews": "1 RV, 1 RZP",
+      "lon": 18.20439,
+      "lat": 49.54956,
+      "confidence": "oficiální seznam + adresa z registru MZ"
+    },
+    {
+      "name": "ZZS MSK Kopřivnice",
+      "address": "Záhumenní 35/24, Kopřivnice",
+      "crews": "1 RZP",
+      "lon": 18.13266,
+      "lat": 49.58493,
+      "confidence": "oficiální seznam + adresa z registru MZ (geokódováno jen na úroveň ulice)"
+    },
+    {
+      "name": "ZZS MSK Studénka",
+      "address": "Tovární 899, Studénka",
+      "crews": "1 RZP",
+      "lon": 18.05427,
+      "lat": 49.70929,
+      "confidence": "oficiální seznam + adresa z registru MZ"
+    },
+    {
+      "name": "ZZS MSK Bílovec",
+      "address": "B. Němcové 1182/8, Bílovec",
+      "crews": "1 RZP",
+      "lon": 18.02517,
+      "lat": 49.75699,
+      "confidence": "oficiální seznam + adresa z registru MZ"
+    },
+    {
+      "name": "ZZS ZK Vsetín",
+      "address": "Nemocniční 940, Vsetín",
+      "crews": "neověřeno",
+      "lon": 17.9979,
+      "lat": 49.33219,
+      "confidence": "záznam ve firemním katalogu (neověřeno)"
+    },
+    {
+      "name": "ZZS ZK Valašské Meziříčí",
+      "address": "U Nemocnice 1511, Valašské Meziříčí",
+      "crews": "neověřeno",
+      "lon": 17.9786,
+      "lat": 49.46325,
+      "confidence": "záznam ve firemním katalogu (neověřeno)"
+    },
+    {
+      "name": "ZZS ZK Rožnov pod Radhoštěm",
+      "address": "Rožnov pod Radhoštěm",
+      "crews": "neověřeno",
+      "lon": 18.13989,
+      "lat": 49.46178,
+      "confidence": "budova označená v OSM jako výjezdová základna (bez názvu); příslušnost k ZZS ZK odvozena z polohy"
+    }
+  ]
+}

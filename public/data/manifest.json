@@ -1,0 +1,38 @@
+{
+  "retrievedAt": "2026-10-13",
+  "builtAt": "2026-10-13",
+  "extent": {
+    "south": 49.28,
+    "west": 17.95,
+    "north": 49.78,
+    "east": 18.95
+  },
+  "dem": {
+    "zoom": 10,
+    "px0": 144142,
+    "py0": 89153,
+    "width": 729,
+    "height": 562,
+    "min": 211,
+    "max": 1308
+  },
+  "counts": {
+    "settlements": 343,
+    "settlementsWithPopulation": 218,
+    "populationTagged": 505730,
+    "peaks": 136,
+    "peaksInOsm": 512,
+    "huts": 34,
+    "viewpoints": 46,
+    "resorts": 8,
+    "trailPoints": 1136,
+    "trailKm": 1965,
+    "aeds": 4,
+    "ambulanceStations": 16,
+    "fireStations": 211,
+    "mountainRescue": 7,
+    "hospitals": 11,
+    "aerodromes": 44,
+    "protectedAreas": 135
+  }
+}
