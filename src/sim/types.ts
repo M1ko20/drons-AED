@@ -168,6 +168,9 @@ export interface OpsSettings {
   coldDeratePerC: number
   /** allow flights at night */
   nightOps: boolean
+  /** fly below the manufacturer's minimum temperature, down to coldMinC */
+  coldOps: boolean
+  coldMinC: number
   /** preferred delivery mode order */
   modePreference: DeliveryMode[]
 }

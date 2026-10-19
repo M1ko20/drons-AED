@@ -3,7 +3,8 @@ import { loadWorld, type World } from '../data/world'
 import type { DemandPoint } from '../sim/coverage'
 import type { LngLat } from '../sim/types'
 import type { WorkerRequest } from '../worker/analysis.worker'
-import { defaultConfig, PRESETS, uid, type ScenarioConfig } from './config'
+import { CASE_BY_ID } from '../data/cases'
+import { caseConfig, defaultConfig, PRESETS, uid, type ScenarioConfig } from './config'
 import { runScenario, type AnalysisResult, type OptimizeRequest, type OptimizeResponse, type ScenarioResult } from './engine'
 import { computeMetrics, type Metrics } from './metrics'
 
@@ -42,7 +43,7 @@ export type MapMode =
   | { kind: 'add-station'; station: 'ambulance' | 'mountain-rescue' }
   | { kind: 'add-candidate' }
 
-export type TabId = 'scenario' | 'fleet' | 'conditions' | 'responders' | 'coverage' | 'layers'
+export type TabId = 'cases' | 'scenario' | 'fleet' | 'conditions' | 'responders' | 'coverage' | 'layers'
 export type ModalId = null | 'drones' | 'sources' | 'compare' | 'report' | 'help'
 
 export interface SavedScenario {
@@ -95,11 +96,14 @@ interface AppState {
   playing: boolean
   toast: string | null
   flyTo: { center: LngLat; seq: number } | null
+  /** id of the real case last loaded (see data/cases.ts) */
+  activeCase: string | null
 
   init: () => Promise<void>
   update: (fn: (c: ScenarioConfig) => void) => void
   setConfig: (c: ScenarioConfig) => void
   loadPreset: (id: string) => void
+  loadCase: (id: string) => void
   set: (p: Partial<AppState>) => void
   toggleLayer: (id: LayerId) => void
   requestOptimize: (req: OptimizeRequest) => void
@@ -158,6 +162,18 @@ let analysisJob = 0
 let optimizeJob = 0
 let analysisTimer: ReturnType<typeof setTimeout> | undefined
 let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+/** Keeps ?pripad=<id> in the address bar so that a loaded case can be shared as a link. */
+function setCaseParam(id: string | null) {
+  try {
+    const url = new URL(location.href)
+    if (id) url.searchParams.set('pripad', id)
+    else url.searchParams.delete('pripad')
+    history.replaceState(null, '', url)
+  } catch {
+    /* not in a browser */
+  }
+}
 
 /** The parts of the configuration the coverage analysis depends on (not incidents or the name). */
 const analysisKey = (c: ScenarioConfig) => JSON.stringify({ ...c, incidents: null, name: null })
@@ -221,6 +237,7 @@ export const useApp = create<AppState>((set, get) => {
     playing: false,
     toast: null,
     flyTo: null,
+    activeCase: null,
 
     init: async () => {
       try {
@@ -299,6 +316,12 @@ export const useApp = create<AppState>((set, get) => {
         })
         send({ type: 'init', base: new URL(base, location.href).href, chkoRings })
         recompute(null)
+        // a shared link opens straight into a case and replays it
+        const linked = new URLSearchParams(location.search).get('pripad')
+        if (linked) {
+          if (CASE_BY_ID[linked]) get().loadCase(linked)
+          else setCaseParam(null)
+        }
       } catch (e) {
         set({ loadError: e instanceof Error ? e.message : String(e) })
       }
@@ -324,7 +347,26 @@ export const useApp = create<AppState>((set, get) => {
       const preset = PRESETS.find((p) => p.id === id)
       if (!preset || !s.world) return
       s.setConfig(preset.build(s.world))
+      set({ activeCase: null })
+      setCaseParam(null)
       s.notify(`Načten vzorový scénář „${preset.name}“`)
+    },
+
+    loadCase: (id) => {
+      const s = get()
+      const c = CASE_BY_ID[id]
+      if (!c || !s.world) return
+      s.setConfig(caseConfig(s.world, c))
+      set({
+        activeCase: id,
+        tab: 'cases',
+        resultsOpen: true,
+        selectedIncident: get().config.incidents[0]?.id ?? null,
+        flyTo: { center: c.position, seq: Date.now() },
+        playT: 0,
+        playing: true,
+      })
+      setCaseParam(id)
     },
 
     set: (p) => {

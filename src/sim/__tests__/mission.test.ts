@@ -145,6 +145,12 @@ describe('weather, payload and data gates', () => {
   it('icing grounds every aircraft', () => {
     expect(run({ icing: true }, testPerf({ rain: 'heavy' })).reasons).toContain('icing')
   })
+  it('flight in frost lowers the minimum temperature only when enabled, never raising a better published limit', () => {
+    expect(run({ tempC: -15 }, testPerf(), { coldOps: true, coldMinC: -20 }).feasible).toBe(true)
+    expect(run({ tempC: -15 }, testPerf(), { coldOps: false, coldMinC: -20 }).reasons).toContain('temperature')
+    expect(run({ tempC: -20 }, testPerf({ tempMinC: -25 }), { coldOps: true, coldMinC: -10 }).feasible).toBe(true)
+    expect(run({ tempC: -25 }, testPerf(), { coldOps: true, coldMinC: -20 }).reasons).toContain('temperature')
+  })
   it('night flights only when enabled', () => {
     expect(run({ night: true }).feasible).toBe(true)
     expect(run({ night: true }, testPerf(), { nightOps: false }).reasons).toContain('night')

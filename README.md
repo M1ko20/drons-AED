@@ -48,11 +48,16 @@ npm run check:browser        # uloží snímky do screenshots/ a vypíše chyby 
 - **Umístit událost** kliknutím do mapy. Model vybere nejrychlejší proveditelný dron, vykreslí
   jeho trasu i trasy sanitky, Horské služby a vrtulníku a rozepíše každou časovou složku včetně
   jejího původu (studie, předpoklad, model).
+- **Přehrát skutečné případy** (záložka Případy): úmrtí na zástavu oběhu v Beskydech podle zpráv
+  Horské služby a médií, s počasím toho dne (reanalýza ERA5 přes Open-Meteo), a dvě modelové
+  situace podle událostí z polských Beskyd přenesené na české území. Odkaz `?pripad=<id>` případ
+  rovnou otevře a přehraje; seznam je v `src/data/cases.ts`.
 - **Přehrát** zásah na mapě; při více událostech je vidět, jak si je drony rozdělí.
 - **Nastavit flotilu**: základny na stávajících stanovištích nebo kdekoli v mapě (lze je
   přetahovat), počet dronů, 13 dohledaných typů strojů, stav mimo provoz, přeřazení mezi
   základnami, cestovní rychlost v mezích údajů výrobce, hmotnost sady AED, zdržení při startu
-  a doručení, rezervy, přípravu k dalšímu letu a způsob návratu.
+  a doručení, rezervy, přípravu k dalšímu letu a způsob návratu; volitelně let i pod minimální teplotou udávanou výrobcem (předpoklad podle
+  sdělení o praxi ve Slovinsku, písemný zdroj zatím nedohledán).
 - **Zobrazit ceny a náklady**: cenu každého použitého stroje, jednorázové pořízení flotily
   a roční náklady rozepsané na odpisy, údržbu, provoz základen, AED a personál – v korunách
   i eurech. Je vidět v záložce Flotila, v dolní liště statistik, v tabulce letounů, v tiskovém

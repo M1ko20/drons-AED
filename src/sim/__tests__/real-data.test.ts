@@ -2,6 +2,9 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { caseConfig } from '../../app/config'
+import { runScenario } from '../../app/engine'
+import { CASES } from '../../data/cases'
 import { DEFAULT_COMPARATORS, DEFAULT_KIT, DEFAULT_OPS, WEATHER_PRESETS } from '../../data/defaults'
 import { DRONES, DRONE_BY_ID } from '../../data/drones'
 import { SOURCE_BY_ID } from '../../data/sources'
@@ -236,5 +239,18 @@ describe('Beskydy scenarios', () => {
     console.info(`trail points: ${trail.length}; AED at patient ≤ 10 min: ${(in10 * 100).toFixed(1)} %; median ${(quantile(times, 0.5) / 60).toFixed(1)} min`)
     expect(in10).toBeGreaterThan(0.1)
     expect(in10).toBeLessThan(0.95)
+  })
+})
+
+describe('real cases', () => {
+  it.each(CASES.map((c) => [c.id, c] as const))('%s lies in the data and the small fleet can fly it', (_id, c) => {
+    expect(inDem(world.dem, c.position)).toBe(true)
+    const config = caseConfig(world, c)
+    const out = runScenario(world, config).outcomes[0]
+    expect(out.best, out.candidates[0]?.reasonText.join('; ')).not.toBeNull()
+    expect(config.comparators.hems.enabled).toBe(!c.hemsUnavailable)
+    // print the comparison so a reviewer can check what the case page will show
+    const rows = out.comparators.filter((r) => r.available).map((r) => `${r.kind} ${Math.round(r.totalS)} s`)
+    console.log(`${c.id}: drone ${Math.round(out.best!.atPatientS)} s (${out.best!.specId}, ${out.best!.baseId}); ${rows.join(', ')}`)
   })
 })

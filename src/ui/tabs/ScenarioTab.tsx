@@ -96,7 +96,7 @@ export function ScenarioTab() {
   )
 }
 
-function Playback() {
+export function Playback() {
   const result = useApp((s) => s.result)
   const selected = useApp((s) => s.selectedIncident)
   const playT = useApp((s) => s.playT)

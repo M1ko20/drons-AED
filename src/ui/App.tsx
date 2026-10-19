@@ -8,6 +8,7 @@ import { DroneTable } from './modals/DroneTable'
 import { ReportModal } from './modals/ReportModal'
 import { SourcesModal } from './modals/SourcesModal'
 import { ResultsPanel } from './ResultsPanel'
+import { CasesTab } from './tabs/CasesTab'
 import { ConditionsTab } from './tabs/ConditionsTab'
 import { CoverageTab } from './tabs/CoverageTab'
 import { FleetTab } from './tabs/FleetTab'
@@ -17,6 +18,7 @@ import { ScenarioTab } from './tabs/ScenarioTab'
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'scenario', label: 'Scénář' },
+  { id: 'cases', label: 'Případy' },
   { id: 'fleet', label: 'Flotila' },
   { id: 'conditions', label: 'Podmínky' },
   { id: 'responders', label: 'Složky' },
@@ -165,6 +167,7 @@ function Shell() {
         </div>
         <div className="tab-body" role="tabpanel">
           {tab === 'scenario' && <ScenarioTab />}
+          {tab === 'cases' && <CasesTab />}
           {tab === 'fleet' && <FleetTab />}
           {tab === 'conditions' && <ConditionsTab />}
           {tab === 'responders' && <RespondersTab />}

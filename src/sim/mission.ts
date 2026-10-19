@@ -69,8 +69,10 @@ export function staticGates(
     add('wind', `Průměrný vítr ${weather.windMs} m/s překračuje limit ${perf.maxWindMs} m/s`)
   if (weather.gustMs > perf.maxGustMs)
     add('gust', `Nárazy ${weather.gustMs} m/s překračují limit ${perf.maxGustMs.toFixed(0)} m/s`)
-  if (weather.tempC < perf.tempMinC || weather.tempC > perf.tempMaxC)
-    add('temperature', `${weather.tempC} °C je mimo provozní rozsah ${perf.tempMinC}…${perf.tempMaxC} °C`)
+  // the cold-operations assumption only ever lowers the limit, never raises a better published one
+  const tempMinC = ops.coldOps ? Math.min(perf.tempMinC, ops.coldMinC) : perf.tempMinC
+  if (weather.tempC < tempMinC || weather.tempC > perf.tempMaxC)
+    add('temperature', `${weather.tempC} °C je mimo provozní rozsah ${tempMinC}…${perf.tempMaxC} °C${ops.coldOps && tempMinC < perf.tempMinC ? ' (s předpokladem letu v mrazu)' : ''}`)
   if (weather.icing) add('icing', 'Námraza: žádný z modelovaných strojů nesmí létat v podmínkách námrazy')
   if (weather.precipitation !== 'none') {
     const heavy = weather.precipitation === 'heavy-rain' || weather.precipitation === 'snow'

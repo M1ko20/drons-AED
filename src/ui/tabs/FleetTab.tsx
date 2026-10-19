@@ -9,7 +9,7 @@ import type { CostSettings } from '../../sim/cost'
 import { kitMassKg, rangeAtPayloadKm } from '../../sim/energy'
 import { resolvePerf } from '../../sim/perf'
 import type { DeliveryMode, OpsSettings } from '../../sim/types'
-import { Check, Empty, EvidenceTag, Field, Num, Section } from '../bits'
+import { Check, Empty, EvidenceTag, Field, Info, Num, Section } from '../bits'
 
 const MODE_LABEL: Record<DeliveryMode, string> = { winch: 'naviják', 'low-drop': 'spuštění na laně', parachute: 'padák', land: 'přistání' }
 const RAIN_LABEL = { none: 'ne', light: 'jen slabý', heavy: 'i silný', unknown: 'neuvedeno' } as const
@@ -317,6 +317,10 @@ export function FleetTab() {
         <Check checked={config.ops.nightOps} onChange={(v) => setOps('nightOps', v)}>
           Noční provoz povolen
         </Check>
+        <Check checked={config.ops.coldOps} onChange={(v) => setOps('coldOps', v)}>
+          {OPS_INFO.coldOps.label} <Info text={OPS_INFO.coldOps.basis} />
+        </Check>
+        {config.ops.coldOps && <div className="grid2">{opsNum('coldMinC', { unit: '°C', min: -30, max: 0, step: 1 })}</div>}
       </Section>
     </>
   )

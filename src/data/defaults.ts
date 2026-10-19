@@ -19,6 +19,8 @@ export const DEFAULT_OPS: OpsSettings = {
   retrievalS: 30,
   coldDeratePerC: 0.008,
   nightOps: true,
+  coldOps: false,
+  coldMinC: -10,
   modePreference: ['winch', 'low-drop', 'parachute', 'land'],
 }
 
@@ -50,6 +52,15 @@ export const OPS_INFO: Record<keyof OpsSettings, { label: string; basis: string;
   retrievalS: { label: 'Přinesení AED k pacientovi', basis: 'Švédští autoři odhadují 30 s; zásilka dopadla do 15 m od cíle v 91 % případů.', sourceId: 'schierbeck2023' },
   coldDeratePerC: { label: 'Úbytek kapacity v chladu', basis: 'Předpoklad: využitelná kapacita baterie klesá o 0,8 % na každý °C pod 15 °C (−10 °C → 80 %). Žádný výrobce křivku nezveřejňuje.' },
   nightOps: { label: 'Noční provoz', basis: 'Předpoklad. Ve Švédsku se po úpravě softwaru a osvětlení létalo i za tmy; v Česku by šlo o součást oprávnění k provozu.', sourceId: 'schierbeck2023' },
+  coldOps: {
+    label: 'Let pod minimální teplotou výrobce',
+    basis:
+      'Předpoklad: stroj smí letět i pod teplotou, kterou výrobce uvádí jako minimum (u Wingcopteru a RigiTechu 0 °C), až do zadané teploty. Vychází ze sdělení o praxi ve Slovinsku, kde se podle něj s drony létá i v mrazu; písemný zdroj se nám zatím nepodařilo dohledat. Úbytek kapacity baterie v chladu se počítá dál.',
+  },
+  coldMinC: {
+    label: 'Nejnižší teplota letu v mrazu',
+    basis: 'Předpoklad: do této teploty se při zapnutém letu v mrazu létá. Stroje s lepším zveřejněným limitem (např. DJI −20 °C) si ponechají ten svůj.',
+  },
   modePreference: { label: 'Preferovaný způsob doručení', basis: 'Nejprve naviják, protože nepotřebuje plochu k přistání.' },
 }
 

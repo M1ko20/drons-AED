@@ -1,5 +1,6 @@
 // Scenario configuration: everything a user can change, in one serialisable object.
 // User-facing texts are Czech.
+import type { RealCase } from '../data/cases'
 import { DEFAULT_ALERTS_PER_100K, DEFAULT_COMPARATORS, DEFAULT_COSTS, DEFAULT_KIT, DEFAULT_OPS, WEATHER_PRESETS } from '../data/defaults'
 import type { Facility, World } from '../data/world'
 import { defaultZones } from '../data/world'
@@ -211,3 +212,22 @@ export const PRESETS: Preset[] = [
 ]
 
 export const defaultConfig = (world: World) => PRESETS[0].build(world)
+
+/**
+ * A real case on the small fleet: the day's weather, the reported place, and flight in frost
+ * allowed so that a manufacturer's 0 °C limit does not decide the outcome on its own.
+ */
+export function caseConfig(world: World, c: RealCase): ScenarioConfig {
+  const base = PRESETS[0].build(world)
+  const comparators = structuredClone(base.comparators)
+  if (c.hemsUnavailable) comparators.hems.enabled = false
+  return {
+    ...base,
+    name: 'Případ: ' + c.title,
+    weather: { ...c.weather },
+    weatherPreset: 'custom',
+    ops: { ...base.ops, coldOps: true },
+    comparators,
+    incidents: [{ id: 'inc-case-' + c.id, label: c.title, position: c.position, t0S: 0, site: c.site }],
+  }
+}
