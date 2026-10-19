@@ -5,7 +5,7 @@ import { CASES, SKIPPED_CASES, type RealCase } from '../../data/cases'
 import { modelName } from '../../data/drones'
 import { formatDuration } from '../../sim/stats'
 import { EvidenceTag, Section } from '../bits'
-import { Playback } from './ScenarioTab'
+import { PlaybackControls } from './ScenarioTab'
 
 const PRECIP: Record<string, string> = { none: 'beze srážek', 'light-rain': 'slabý déšť', 'heavy-rain': 'silný déšť', snow: 'sněžení' }
 
@@ -22,7 +22,6 @@ export function CasesTab() {
           Modelové situace jsou skutečné události z polských Beskyd přenesené na podobné místo v Česku. Polské území je mimo rozsah práce.
         </p>
       </Section>
-      {active && <Playback />}
       {CASES.map((c) => (
         <CaseCard key={c.id} c={c} active={c.id === active} />
       ))}
@@ -52,7 +51,7 @@ function CaseCard({ c, active }: { c: RealCase; active: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   // a case opened from a link may sit further down the list
   useEffect(() => {
-    if (active) ref.current?.scrollIntoView({ block: 'nearest' })
+    if (active) ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
   }, [active])
   const share = () => {
     const url = new URL(location.href)
@@ -76,14 +75,20 @@ function CaseCard({ c, active }: { c: RealCase; active: boolean }) {
         <b>Počasí:</b> {num(w.tempC, 1)} °C, vítr {num(w.windMs, 1)} m/s, nárazy {num(w.gustMs, 1)} m/s, {PRECIP[w.precipitation]}
         <span className="hint"> · {c.weatherNote}</span>
       </p>
-      <div className="inline">
-        <button className="btn primary" onClick={() => loadCase(c.id)}>
-          ▶ {active ? 'Přehrát znovu' : 'Přehrát případ'}
-        </button>
-        <button className="btn small ghost" onClick={share} title="Zkopíruje odkaz, který případ rovnou otevře a přehraje">
-          Odkaz
-        </button>
-      </div>
+      {active ? (
+        <div className="case-player">
+          <PlaybackControls />
+        </div>
+      ) : (
+        <div className="inline">
+          <button className="btn primary" onClick={() => loadCase(c.id)}>
+            ▶ Přehrát případ
+          </button>
+        </div>
+      )}
+      <button className="link-btn text case-share" onClick={share} title="Zkopíruje odkaz, který případ rovnou otevře a přehraje">
+        Zkopírovat odkaz na případ
+      </button>
       {active && <CaseDetail c={c} />}
     </div>
   )

@@ -99,6 +99,19 @@ export function ScenarioTab() {
 export function Playback() {
   const result = useApp((s) => s.result)
   const selected = useApp((s) => s.selectedIncident)
+  if (!result?.outcomes.some((o) => o.incident.id === selected)) return null
+  return (
+    <Section title="Přehrávání">
+      <p className="hint">Přehraje vybranou událost na mapě od okamžiku volání. Všechny složky se pohybují modelovanou rychlostí.</p>
+      <PlaybackControls />
+    </Section>
+  )
+}
+
+/** Play/pause, rewind, speed and scrubber for the selected incident; also drives the playback clock. */
+export function PlaybackControls() {
+  const result = useApp((s) => s.result)
+  const selected = useApp((s) => s.selectedIncident)
   const playT = useApp((s) => s.playT)
   const playing = useApp((s) => s.playing)
   const set = useApp((s) => s.set)
@@ -126,8 +139,7 @@ export function Playback() {
 
   if (!outcome) return null
   return (
-    <Section title="Přehrávání">
-      <p className="hint">Přehraje vybranou událost na mapě od okamžiku volání. Všechny složky se pohybují modelovanou rychlostí.</p>
+    <>
       <div className="playback">
         <button
           className="btn primary"
@@ -159,6 +171,6 @@ export function Playback() {
         aria-label="Pozice přehrávání"
         onChange={(e) => set({ playT: Number(e.target.value), playing: false })}
       />
-    </Section>
+    </>
   )
 }

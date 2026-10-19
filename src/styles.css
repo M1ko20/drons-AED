@@ -1846,3 +1846,21 @@ select {
 .case-links a {
   color: var(--accent);
 }
+.case-card {
+  scroll-margin-top: 6px;
+}
+.case-player {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+.case-share {
+  align-self: flex-start;
+  font-size: 11.5px;
+}
+.case-player .clock {
+  white-space: nowrap;
+}
