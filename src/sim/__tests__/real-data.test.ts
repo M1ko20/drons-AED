@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { caseConfig } from '../../app/config'
+import { applyCaseOverlay, caseConfig, caseOverlayOf, defaultConfig, PRESETS } from '../../app/config'
 import { runScenario } from '../../app/engine'
 import { CASES } from '../../data/cases'
 import { DEFAULT_COMPARATORS, DEFAULT_KIT, DEFAULT_OPS, WEATHER_PRESETS } from '../../data/defaults'
@@ -245,12 +245,29 @@ describe('Beskydy scenarios', () => {
 describe('real cases', () => {
   it.each(CASES.map((c) => [c.id, c] as const))('%s lies in the data and the small fleet can fly it', (_id, c) => {
     expect(inDem(world.dem, c.position)).toBe(true)
-    const config = caseConfig(world, c)
+    const config = caseConfig(defaultConfig(world), c)
     const out = runScenario(world, config).outcomes[0]
     expect(out.best, out.candidates[0]?.reasonText.join('; ')).not.toBeNull()
     expect(config.comparators.hems.enabled).toBe(!c.hemsUnavailable)
     // print the comparison so a reviewer can check what the case page will show
     const rows = out.comparators.filter((r) => r.available).map((r) => `${r.kind} ${Math.round(r.totalS)} s`)
     console.log(`${c.id}: drone ${Math.round(out.best!.atPatientS)} s (${out.best!.specId}, ${out.best!.baseId}); ${rows.join(', ')}`)
+  })
+})
+
+describe('opening a case', () => {
+  it('keeps the fleet and settings and gives back the own incidents and weather when closed', () => {
+    const own = PRESETS.find((p) => p.id !== PRESETS[0].id && p.build(world).bases.length > 3)!.build(world)
+    own.weather.windMs = 7
+    own.comparators.hems.enabled = true
+    const c = CASES.find((x) => x.hemsUnavailable) ?? CASES[0]
+    const inCase = caseConfig(own, c)
+    expect(inCase.bases).toEqual(own.bases)
+    expect(inCase.costs).toEqual(own.costs)
+    expect(inCase.incidents).toHaveLength(1)
+    expect(inCase.weather).toEqual(c.weather)
+    expect(inCase.ops.coldOps).toBe(true)
+    const back = applyCaseOverlay(inCase, caseOverlayOf(own))
+    expect(back).toEqual(own)
   })
 })

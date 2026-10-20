@@ -40,16 +40,17 @@ await idle()
 const box = await (await page.$('.map')).boundingBox()
 
 // 1. two emergencies one minute apart served by a single base with one drone
+await click('.section-toggle', 'Vzorové scénáře')
 await click('.preset', 'Různé typy')
 await idle()
 report.mixedCandidates = await page.evaluate(() => [...document.querySelectorAll('.results .table tbody tr')].slice(-5).map((r) => r.innerText.replace(/\s+/g, ' ')))
 await shot('10-mixed-models')
 await click('.preset', 'Malá flotila')
 await idle()
-await click('.btn.small', '+ Přidat další')
+await click('.btn.small', '+ Přidat událost')
 await page.mouse.click(box.x + box.width * 0.4, box.y + box.height * 0.62)
 await sleep(600)
-await click('.btn.small', '+ Přidat další')
+await click('.btn.small', '+ Přidat událost')
 await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.46)
 await sleep(600)
 // set call times of 2nd and 3rd to 1 and 2 minutes
@@ -68,7 +69,8 @@ report.thirdIncidentComponents = await page.evaluate(() => [...document.querySel
 await shot('11-three-emergencies')
 
 // 2. offline background
-await click('.tabs button', 'Vrstvy')
+await click('.tabs.main button', 'Nastavení')
+await click('.tabs.sub button', 'Mapa')
 await page.evaluate(() => document.querySelectorAll('input[name=basemap]')[1].click())
 await sleep(2500)
 await shot('12-offline-basemap')
@@ -76,11 +78,13 @@ await page.evaluate(() => document.querySelectorAll('input[name=basemap]')[0].cl
 await sleep(2500)
 
 // 3. enforce the airport zone and place an emergency behind it
-await click('.tabs button', 'Scénář')
+await click('.tabs.main button', 'Simulace')
+await click('.section-toggle', 'Vzorové scénáře')
 await click('.preset', 'Rozšířená flotila')
 await idle()
 report.expanded = await stats()
-await click('.tabs button', 'Podmínky')
+await click('.tabs.main button', 'Nastavení')
+await click('.tabs.sub button', 'Počasí')
 await page.evaluate(() => { const row = [...document.querySelectorAll('.zone-row')].find((r) => r.textContent.includes('LKFR')); row.querySelector('input[type=checkbox]').click() })
 await idle()
 await sleep(500)
@@ -88,7 +92,8 @@ await shot('13-zone-enforced')
 report.zoneRoute = await page.evaluate(() => document.querySelector('.headline .status')?.textContent)
 
 // 4. bad weather preset and baseline
-await click('.tabs button', 'Scénář')
+await click('.tabs.main button', 'Simulace')
+await click('.section-toggle', 'Vzorové scénáře')
 await click('.preset', 'Výchozí stav')
 await idle()
 report.baseline = { headline: await page.evaluate(() => document.querySelector('.headline')?.innerText.replace(/\s+/g, ' ')), stats: await stats() }
@@ -99,7 +104,8 @@ report.multirotor = await stats()
 await shot('15-multirotor')
 
 // 4b. fleet costs: screenshot, then override the Matrice 400 price and check the total changes
-await click('.tabs button', 'Flotila')
+await click('.tabs.main button', 'Nastavení')
+await click('.tabs.sub button', 'Flotila')
 await sleep(400)
 const costTitle = () => page.evaluate(() => [...document.querySelectorAll('.section-toggle')].find((b) => b.textContent.includes('Náklady flotily'))?.textContent.trim())
 report.costBefore = await costTitle()

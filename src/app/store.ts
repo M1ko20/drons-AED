@@ -4,7 +4,7 @@ import type { DemandPoint } from '../sim/coverage'
 import type { LngLat } from '../sim/types'
 import type { WorkerRequest } from '../worker/analysis.worker'
 import { CASE_BY_ID } from '../data/cases'
-import { caseConfig, defaultConfig, PRESETS, uid, type ScenarioConfig } from './config'
+import { applyCaseOverlay, caseConfig, caseOverlayOf, defaultConfig, PRESETS, uid, type CaseOverlay, type ScenarioConfig } from './config'
 import { runScenario, type AnalysisResult, type OptimizeRequest, type OptimizeResponse, type ScenarioResult } from './engine'
 import { computeMetrics, type Metrics } from './metrics'
 
@@ -31,7 +31,7 @@ export const LAYER_INFO: { id: LayerId; label: string; hint: string }[] = [
   { id: 'aeds', label: 'Zmapované veřejné AED', hint: 'Pouze OpenStreetMap – zdaleka neúplné' },
   { id: 'trails', label: 'Značené turistické trasy', hint: 'Trasy KČT z OpenStreetMap' },
   { id: 'protected', label: 'Chráněná území', hint: 'CHKO, národní přírodní rezervace, rezervace a památky' },
-  { id: 'zones', label: 'Bezletové zóny', hint: 'Ilustrativní kruhy; vynutit je lze v záložce Podmínky' },
+  { id: 'zones', label: 'Bezletové zóny', hint: 'Ilustrativní kruhy; vynutit je lze v Nastavení › Počasí' },
   { id: 'hillshade', label: 'Stínování terénu', hint: 'Z přibaleného výškového modelu' },
 ]
 
@@ -94,16 +94,23 @@ interface AppState {
   saved: SavedScenario[]
   playT: number
   playing: boolean
+  /** simulated seconds per real second */
+  playSpeed: number
+  /** whether the coverage dashboard shows every statistic or only the key ones */
+  statsOpen: boolean
   toast: string | null
   flyTo: { center: LngLat; seq: number } | null
   /** id of the real case last loaded (see data/cases.ts) */
   activeCase: string | null
+  /** the user's own incidents and weather from before the case was opened */
+  caseBackup: CaseOverlay | null
 
   init: () => Promise<void>
   update: (fn: (c: ScenarioConfig) => void) => void
   setConfig: (c: ScenarioConfig) => void
   loadPreset: (id: string) => void
   loadCase: (id: string) => void
+  closeCase: () => void
   set: (p: Partial<AppState>) => void
   toggleLayer: (id: LayerId) => void
   requestOptimize: (req: OptimizeRequest) => void
@@ -130,6 +137,8 @@ const DEFAULT_LAYERS: Record<LayerId, boolean> = {
 
 interface Persisted {
   config?: ScenarioConfig
+  activeCase?: string | null
+  caseBackup?: CaseOverlay | null
   saved?: SavedScenario[]
   layers?: Record<LayerId, boolean>
   basemap?: 'online' | 'offline'
@@ -149,7 +158,7 @@ const reviver = (_k: string, v: unknown) => (v === '__NaN' ? NaN : v === '__Inf'
 
 function persist(s: AppState) {
   try {
-    const data: Persisted = { config: s.config, saved: s.saved, layers: s.layers, basemap: s.basemap }
+    const data: Persisted = { config: s.config, activeCase: s.activeCase, caseBackup: s.caseBackup, saved: s.saved, layers: s.layers, basemap: s.basemap }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data, replacer))
   } catch {
     /* storage unavailable or full: the app keeps working without persistence */
@@ -235,9 +244,12 @@ export const useApp = create<AppState>((set, get) => {
     saved: [],
     playT: 0,
     playing: false,
+    playSpeed: 30,
+    statsOpen: false,
     toast: null,
     flyTo: null,
     activeCase: null,
+    caseBackup: null,
 
     init: async () => {
       try {
@@ -313,6 +325,8 @@ export const useApp = create<AppState>((set, get) => {
           layers: { ...DEFAULT_LAYERS, ...stored.layers },
           basemap: stored.basemap ?? 'online',
           selectedIncident: config.incidents[0]?.id ?? null,
+          activeCase: stored.caseBackup && stored.activeCase && CASE_BY_ID[stored.activeCase] ? stored.activeCase : null,
+          caseBackup: stored.caseBackup && stored.activeCase && CASE_BY_ID[stored.activeCase] ? stored.caseBackup : null,
         })
         send({ type: 'init', base: new URL(base, location.href).href, chkoRings })
         recompute(null)
@@ -320,8 +334,8 @@ export const useApp = create<AppState>((set, get) => {
         const linked = new URLSearchParams(location.search).get('pripad')
         if (linked) {
           if (CASE_BY_ID[linked]) get().loadCase(linked)
-          else setCaseParam(null)
-        }
+          else setCaseParam(get().activeCase)
+        } else setCaseParam(get().activeCase)
       } catch (e) {
         set({ loadError: e instanceof Error ? e.message : String(e) })
       }
@@ -346,8 +360,9 @@ export const useApp = create<AppState>((set, get) => {
       const s = get()
       const preset = PRESETS.find((p) => p.id === id)
       if (!preset || !s.world) return
+      // a preset replaces the whole scenario, so there is nothing of the user's to bring back afterwards
+      set({ activeCase: null, caseBackup: null })
       s.setConfig(preset.build(s.world))
-      set({ activeCase: null })
       setCaseParam(null)
       s.notify(`Načten vzorový scénář „${preset.name}“`)
     },
@@ -356,9 +371,11 @@ export const useApp = create<AppState>((set, get) => {
       const s = get()
       const c = CASE_BY_ID[id]
       if (!c || !s.world) return
-      s.setConfig(caseConfig(s.world, c))
+      // switching from one case to another starts again from the user's own scenario
+      const own = s.activeCase && s.caseBackup ? applyCaseOverlay(s.config, s.caseBackup) : s.config
+      set({ activeCase: id, caseBackup: s.activeCase && s.caseBackup ? s.caseBackup : caseOverlayOf(s.config) })
+      s.setConfig(caseConfig(own, c))
       set({
-        activeCase: id,
         tab: 'cases',
         resultsOpen: true,
         selectedIncident: get().config.incidents[0]?.id ?? null,
@@ -367,6 +384,17 @@ export const useApp = create<AppState>((set, get) => {
         playing: true,
       })
       setCaseParam(id)
+    },
+
+    closeCase: () => {
+      const s = get()
+      if (!s.activeCase) return
+      const backup = s.caseBackup
+      set({ activeCase: null, caseBackup: null, playing: false })
+      if (backup) s.setConfig(applyCaseOverlay(s.config, backup))
+      else persist(get())
+      setCaseParam(null)
+      s.notify('Případ ukončen – vaše události a počasí jsou zpět')
     },
 
     set: (p) => {

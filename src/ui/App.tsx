@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { coverageCsv, download, fileBase, incidentsCsv, scenarioJson } from '../app/exporters'
 import { useApp, type TabId } from '../app/store'
 import { Dashboard } from './Dashboard'
@@ -10,21 +10,25 @@ import { SourcesModal } from './modals/SourcesModal'
 import { ResultsPanel } from './ResultsPanel'
 import { CasesTab } from './tabs/CasesTab'
 import { ConditionsTab } from './tabs/ConditionsTab'
-import { CoverageTab } from './tabs/CoverageTab'
+import { CoverageLegend, CoverageTab } from './tabs/CoverageTab'
 import { FleetTab } from './tabs/FleetTab'
 import { LayersTab } from './tabs/LayersTab'
 import { RespondersTab } from './tabs/RespondersTab'
-import { ScenarioTab } from './tabs/ScenarioTab'
+import { ScenarioTab, usePlaybackClock } from './tabs/ScenarioTab'
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'scenario', label: 'Scénář' },
-  { id: 'cases', label: 'Případy' },
+// Simulating is the main job; everything that only changes the model sits one level down under Nastavení.
+const MAIN_TABS: { id: TabId; label: string }[] = [
+  { id: 'scenario', label: 'Simulace' },
+  { id: 'cases', label: 'Skutečné případy' },
+]
+const SETTINGS_TABS: { id: TabId; label: string }[] = [
   { id: 'fleet', label: 'Flotila' },
-  { id: 'conditions', label: 'Podmínky' },
+  { id: 'conditions', label: 'Počasí' },
   { id: 'responders', label: 'Složky' },
   { id: 'coverage', label: 'Pokrytí' },
-  { id: 'layers', label: 'Vrstvy' },
+  { id: 'layers', label: 'Mapa' },
 ]
+const isSettings = (t: TabId) => SETTINGS_TABS.some((x) => x.id === t)
 
 const MODE_HINT: Record<string, string> = {
   'add-incident': 'Kliknutím do mapy umístíte další událost',
@@ -74,7 +78,13 @@ function Shell() {
   const toast = useApp((s) => s.toast)
   const config = useApp((s) => s.config)
   const set = useApp((s) => s.set)
+  const hasIncidents = useApp((s) => s.config.incidents.length > 0)
+  const coverageShown = useApp((s) => s.layers.coverage)
   const [menu, setMenu] = useState(false)
+  const menuRef = useRef<HTMLSpanElement>(null)
+  const lastSettings = useRef<TabId>('fleet')
+  if (isSettings(tab)) lastSettings.current = tab
+  usePlaybackClock()
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -86,6 +96,19 @@ function Shell() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  // the export menu closes on a click anywhere else or on Escape
+  useEffect(() => {
+    if (!menu) return
+    const onDown = (e: MouseEvent) => !menuRef.current?.contains(e.target as Node) && setMenu(false)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(false)
+    document.addEventListener('mousedown', onDown)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [menu])
 
   const exportFile = (kind: 'json' | 'incidents' | 'coverage') => {
     const s = useApp.getState()
@@ -118,18 +141,15 @@ function Shell() {
           <button className="btn" onClick={() => set({ modal: 'compare' })}>
             Uložit / porovnat
           </button>
-          <button className="btn" onClick={() => set({ modal: 'drones' })}>
-            Letouny
-          </button>
           <button className="btn" onClick={() => set({ modal: 'sources' })}>
-            Zdroje a předpoklady
+            Zdroje<span className="wide-only">&nbsp;a předpoklady</span>
           </button>
-          <span className="menu-wrap">
+          <span className="menu-wrap" ref={menuRef}>
             <button className="btn" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-haspopup="menu">
               Export ▾
             </button>
             {menu && (
-              <span className="menu" role="menu" onMouseLeave={() => setMenu(false)}>
+              <span className="menu" role="menu">
                 <button role="menuitem" onClick={() => exportFile('incidents')}>
                   Události a časové složky (CSV)
                 </button>
@@ -158,13 +178,25 @@ function Shell() {
       </header>
 
       <aside className="sidebar" aria-label="Ovládání">
-        <div className="tabs" role="tablist" aria-label="Části ovládání">
-          {TABS.map((t) => (
+        <div className="tabs main" role="tablist" aria-label="Části ovládání">
+          {MAIN_TABS.map((t) => (
             <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'active' : ''} onClick={() => set({ tab: t.id })}>
               {t.label}
             </button>
           ))}
+          <button role="tab" aria-selected={isSettings(tab)} className={isSettings(tab) ? 'active' : ''} onClick={() => !isSettings(tab) && set({ tab: lastSettings.current })}>
+            Nastavení
+          </button>
         </div>
+        {isSettings(tab) && (
+          <div className="tabs sub" role="tablist" aria-label="Nastavení">
+            {SETTINGS_TABS.map((t) => (
+              <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'active' : ''} onClick={() => set({ tab: t.id })}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="tab-body" role="tabpanel">
           {tab === 'scenario' && <ScenarioTab />}
           {tab === 'cases' && <CasesTab />}
@@ -184,9 +216,15 @@ function Shell() {
               {MODE_HINT[mapMode.kind]} · <button onClick={() => set({ mapMode: { kind: 'idle' } })}>Zrušit (Esc)</button>
             </span>
           ) : tab === 'scenario' ? (
-            <span className="map-hint">Kliknutím do mapy umístíte událost · značky lze přetahovat</span>
+            <span className="map-hint">{hasIncidents ? 'Kliknutím do mapy přesunete vybranou událost · značky lze přetahovat' : 'Kliknutím do mapy umístíte událost'}</span>
           ) : null}
         </div>
+        {coverageShown && (
+          <div className="map-legend">
+            <strong>Dron s AED u pacienta</strong>
+            <CoverageLegend vertical />
+          </div>
+        )}
         <Dashboard />
       </main>
 

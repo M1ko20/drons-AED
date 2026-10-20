@@ -96,18 +96,7 @@ export function CoverageTab() {
             <option value="open">Všude volná plocha k přistání</option>
           </select>
         </Field>
-        <div className="legend" aria-label="Legenda pokrytí">
-          {COVERAGE_BANDS.map((b, i) => (
-            <span key={i}>
-              <i style={{ background: b.color }} />
-              {i === 0 ? `≤ ${formatDuration(T * 30)}` : i === 1 ? `≤ ${T}:00` : i === 2 ? `≤ ${formatDuration(T * 90)}` : i === 3 ? `≤ ${formatDuration(T * 120)}` : 'pomaleji'}
-            </span>
-          ))}
-          <span>
-            <i className="hatch" />
-            nelze obsloužit
-          </span>
-        </div>
+        <CoverageLegend />
         {analysis.status === 'running' && <Progress value={analysis.progress} label="Průběh výpočtu pokrytí" />}
         {analysis.status === 'error' && <p className="warn">✕ Výpočet pokrytí selhal: {analysis.error}</p>}
       </Section>
@@ -226,6 +215,25 @@ export function CoverageTab() {
         )}
       </Section>
     </>
+  )
+}
+
+/** Colour bands of the coverage raster, scaled to the target time. */
+export function CoverageLegend({ vertical }: { vertical?: boolean }) {
+  const T = useApp((s) => s.config.analysis.targetMin)
+  return (
+    <div className={'legend' + (vertical ? ' vertical' : '')} aria-label="Legenda pokrytí">
+      {COVERAGE_BANDS.map((b, i) => (
+        <span key={i}>
+          <i style={{ background: b.color }} />
+          {i === 0 ? `≤ ${formatDuration(T * 30)}` : i === 1 ? `≤ ${T}:00` : i === 2 ? `≤ ${formatDuration(T * 90)}` : i === 3 ? `≤ ${formatDuration(T * 120)}` : 'pomaleji'}
+        </span>
+      ))}
+      <span>
+        <i className="hatch" />
+        nelze obsloužit
+      </span>
+    </div>
   )
 }
 

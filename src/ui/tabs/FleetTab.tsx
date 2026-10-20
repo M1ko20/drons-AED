@@ -53,7 +53,14 @@ export function FleetTab() {
 
   return (
     <>
-      <Section title={`Základny a drony (${plural(config.bases.length, 'základna', 'základny', 'základen')}, ${plural(nDrones, 'dron', 'drony', 'dronů')})`}>
+      <Section
+        title={`Základny a drony (${plural(config.bases.length, 'základna', 'základny', 'základen')}, ${plural(nDrones, 'dron', 'drony', 'dronů')})`}
+        aside={
+          <button className="btn small ghost" onClick={() => set({ modal: 'drones' })}>
+            Porovnat letouny
+          </button>
+        }
+      >
         <p className="hint">
           Základny se umisťují na stávající stanoviště záchranných složek nebo kamkoli do mapy. Vhodnost místa (napájení, přístřešek, obsluha, vzdušný
           prostor) není ověřena. Základnu přemístíte přetažením její značky.

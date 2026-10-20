@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { num } from '../../app/format'
+import { PRESETS } from '../../app/config'
+import { num, plural } from '../../app/format'
+import { fleetCounts } from '../../app/metrics'
 import { useApp } from '../../app/store'
 import { CASES, SKIPPED_CASES, type RealCase } from '../../data/cases'
 import { modelName } from '../../data/drones'
@@ -15,9 +17,11 @@ export function CasesTab() {
     <>
       <Section title="Skutečné případy z Beskyd">
         <p className="hint">
-          Úmrtí na zástavu oběhu podle zpráv Horské služby a médií. Tlačítko případ nahraje do simulátoru: místo podle zprávy, počasí toho dne a malou
-          flotilu tří dronů Wingcopter 198 (Frýdlant, Frenštát, Třinec), a rovnou ho přehraje. Vybrány jsou jen případy, kdy by dron mohl vzlétnout.
+          Úmrtí na zástavu oběhu podle zpráv Horské služby a médií. Případ se přehraje s <strong>vaší současnou flotilou a nastavením</strong>; změní se
+          jen místo podle zprávy a počasí toho dne. Let v mrazu se povolí, aby o výsledku nerozhodl sám limit výrobce, a nelétal-li ten den vrtulník,
+          vypne se. Tlačítkem Ukončit případ se vrátí vaše události a počasí.
         </p>
+        <p className="hint">Vybrány jsou případy, kdy by mohla vzlétnout malá flotila ze vzorového scénáře (tři drony Wingcopter 198).</p>
         <p className="hint">
           Modelové situace jsou skutečné události z polských Beskyd přenesené na podobné místo v Česku. Polské území je mimo rozsah práce.
         </p>
@@ -76,9 +80,12 @@ function CaseCard({ c, active }: { c: RealCase; active: boolean }) {
         <span className="hint"> · {c.weatherNote}</span>
       </p>
       {active ? (
-        <div className="case-player">
-          <PlaybackControls />
-        </div>
+        <>
+          <div className="case-player">
+            <PlaybackControls />
+          </div>
+          <CaseFleet />
+        </>
       ) : (
         <div className="inline">
           <button className="btn primary" onClick={() => loadCase(c.id)}>
@@ -90,6 +97,37 @@ function CaseCard({ c, active }: { c: RealCase; active: boolean }) {
         Zkopírovat odkaz na případ
       </button>
       {active && <CaseDetail c={c} />}
+    </div>
+  )
+}
+
+/** The fleet the open case is flown with, and the way out of the case. */
+function CaseFleet() {
+  const config = useApp((s) => s.config)
+  const world = useApp((s) => s.world)!
+  const update = useApp((s) => s.update)
+  const set = useApp((s) => s.set)
+  const closeCase = useApp((s) => s.closeCase)
+  const fleet = fleetCounts(config)
+  return (
+    <div className="case-fleet">
+      <span>
+        Flotila: {fleet.dronesReady ? `${plural(fleet.dronesReady, 'připravený dron', 'připravené drony', 'připravených dronů')} na ${plural(fleet.basesOperational, 'základně', 'základnách', 'základnách')}` : 'žádný připravený dron'}
+        {fleet.models.length > 0 && <span className="muted"> · {fleet.models.join(', ')}</span>}
+      </span>
+      <div className="row wrap">
+        {fleet.dronesReady === 0 && (
+          <button className="btn small" onClick={() => update((c) => void (c.bases = PRESETS[0].build(world).bases))}>
+            Použít malou flotilu ze vzorového scénáře
+          </button>
+        )}
+        <button className="btn small" onClick={() => set({ tab: 'fleet' })}>
+          Upravit flotilu
+        </button>
+        <button className="btn small" onClick={closeCase}>
+          Ukončit případ
+        </button>
+      </div>
     </div>
   )
 }

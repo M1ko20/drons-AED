@@ -256,7 +256,7 @@ export function MapView() {
         // tile failures while offline are expected; surface anything else once
         const msg = String((e as { error?: Error }).error?.message ?? '')
         if (/Failed to fetch|NetworkError|AJAXError/i.test(msg) && useApp.getState().basemap === 'online' && !useApp.getState().basemapNote)
-          useApp.getState().set({ basemapNote: 'Některé online mapové dlaždice se nepodařilo načíst. Je-li podklad neúplný, přepněte ve Vrstvách na offline podklad.' })
+          useApp.getState().set({ basemapNote: 'Některé online mapové dlaždice se nepodařilo načíst. Je-li podklad neúplný, přepněte v Nastavení › Mapa na offline podklad.' })
       })
 
       map.on('click', (e) => {

@@ -213,21 +213,48 @@ export const PRESETS: Preset[] = [
 
 export const defaultConfig = (world: World) => PRESETS[0].build(world)
 
+/** The parts of a scenario that opening a real case replaces; kept aside so that closing the case puts them back. */
+export interface CaseOverlay {
+  name: string
+  incidents: Incident[]
+  weather: Weather
+  weatherPreset: string
+  coldOps: boolean
+  hemsEnabled: boolean
+}
+
+export const caseOverlayOf = (c: ScenarioConfig): CaseOverlay => ({
+  name: c.name,
+  incidents: structuredClone(c.incidents),
+  weather: { ...c.weather },
+  weatherPreset: c.weatherPreset,
+  coldOps: c.ops.coldOps,
+  hemsEnabled: c.comparators.hems.enabled,
+})
+
+export function applyCaseOverlay(c: ScenarioConfig, o: CaseOverlay): ScenarioConfig {
+  const next = structuredClone(c)
+  next.name = o.name
+  next.incidents = structuredClone(o.incidents)
+  next.weather = { ...o.weather }
+  next.weatherPreset = o.weatherPreset
+  next.ops.coldOps = o.coldOps
+  next.comparators.hems.enabled = o.hemsEnabled
+  return next
+}
+
 /**
- * A real case on the small fleet: the day's weather, the reported place, and flight in frost
- * allowed so that a manufacturer's 0 °C limit does not decide the outcome on its own.
+ * A real case on the current scenario: the reported place, the day's weather, the helicopter off
+ * when it could not fly that day, and flight in frost allowed so that a manufacturer's 0 °C limit
+ * does not decide the outcome on its own. Bases, drones and every other assumption stay as they are.
  */
-export function caseConfig(world: World, c: RealCase): ScenarioConfig {
-  const base = PRESETS[0].build(world)
-  const comparators = structuredClone(base.comparators)
-  if (c.hemsUnavailable) comparators.hems.enabled = false
-  return {
-    ...base,
-    name: 'Případ: ' + c.title,
-    weather: { ...c.weather },
-    weatherPreset: 'custom',
-    ops: { ...base.ops, coldOps: true },
-    comparators,
-    incidents: [{ id: 'inc-case-' + c.id, label: c.title, position: c.position, t0S: 0, site: c.site }],
-  }
+export function caseConfig(current: ScenarioConfig, c: RealCase): ScenarioConfig {
+  const next = structuredClone(current)
+  next.name = 'Případ: ' + c.title
+  next.weather = { ...c.weather }
+  next.weatherPreset = 'custom'
+  next.ops.coldOps = true
+  if (c.hemsUnavailable) next.comparators.hems.enabled = false
+  next.incidents = [{ id: 'inc-case-' + c.id, label: c.title, position: c.position, t0S: 0, site: c.site }]
+  return next
 }

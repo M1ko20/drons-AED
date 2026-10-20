@@ -75,31 +75,47 @@ export function ResultsPanel() {
   return (
     <div className="results">
       <header className="results-head">
-        <div>
-          <h2>{outcome.incident.label}</h2>
-          <p className="coord">
-            {num(outcome.incident.position[1], 4)}° s. š. {num(outcome.incident.position[0], 4)}° v. d. ·{' '}
-            {outcome.incident.site === 'open' ? 'volná plocha k přistání' : 'bez plochy k přistání'}
-          </p>
-        </div>
+        <span className="eyebrow">Vybraná událost</span>
+        <h2>{outcome.incident.label}</h2>
+        <p className="coord">
+          {num(outcome.incident.position[1], 4)}° s. š. {num(outcome.incident.position[0], 4)}° v. d. ·{' '}
+          {outcome.incident.site === 'open' ? 'volná plocha k přistání' : 'bez plochy k přistání'}
+        </p>
       </header>
 
       <div className="headline">
+        <span className="headline-label">
+          Od tísňového volání po AED u pacienta
+          <Info text="Simulovaný výsledek: součet časových složek uvedených níže. Jde o čas, kdy je defibrilátor u pacienta, nikoli o čas prvního výboje." />
+        </span>
+        <div className="headline-nums">
+          <div className="hn">
+            <span className="big" style={{ color: best ? COLORS.drone : undefined }}>
+              {best ? formatDuration(best.atPatientS) : '—'}
+            </span>
+            <span className="hn-label">dron s AED</span>
+          </div>
+          {ground && (
+            <div className="hn">
+              <span className="big secondary">{formatDuration(ground.totalS)}</span>
+              <span className="hn-label">{groundName}</span>
+            </div>
+          )}
+          {diff !== null && (
+            <div className={'hn ' + (diff > 0 ? 'gain' : 'loss')}>
+              <span className="big">{formatDuration(Math.abs(diff))}</span>
+              <span className="hn-label">{diff > 0 ? 'o tolik dříve dron' : 'o tolik později dron'}</span>
+            </div>
+          )}
+        </div>
         {best ? (
           <>
-            <div className="headline-num">
-              <span className="big">{formatDuration(best.atPatientS)}</span>
-              <span className="headline-label">
-                od volání po AED u pacienta
-                <Info text="Simulovaný výsledek: součet časových složek uvedených níže. Jde o čas, kdy je defibrilátor u pacienta, nikoli o čas prvního výboje." />
-              </span>
-            </div>
             <p className="headline-compare">
               {diff === null
                 ? 'K porovnání není zapnuta žádná pozemní složka.'
                 : diff > 0
-                  ? `O ${formatDuration(diff)} dříve než první pozemní složka v tomto modelu (${groundName}, ${formatDuration(ground!.totalS)}).`
-                  : `O ${formatDuration(-diff)} později než první pozemní složka v tomto modelu (${groundName}, ${formatDuration(ground!.totalS)}) – zde bez časového přínosu.`}
+                  ? 'Porovnáno s nejrychlejší pozemní složkou v tomto modelu.'
+                  : 'Pozemní složka je v tomto modelu rychlejší – zde dron čas nezkrátí.'}
               {heli && ` Ilustrativní scénář s vrtulníkem: ${formatDuration(heli.totalS)}.`}
             </p>
             <p className="status ok">✓ Proveditelné · {best.routeApprox}</p>
@@ -190,7 +206,7 @@ export function ResultsPanel() {
 
       <Section title={`Všechny posuzované drony (${outcome.candidates.length})`} defaultOpen={!best}>
         {outcome.candidates.length === 0 ? (
-          <Empty title="Scénář nemá žádné drony">Základnu přidáte v záložce Flotila.</Empty>
+          <Empty title="Scénář nemá žádné drony">Základnu přidáte v Nastavení › Flotila.</Empty>
         ) : (
           <table className="table">
             <thead>

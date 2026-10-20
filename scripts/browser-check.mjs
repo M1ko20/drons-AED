@@ -70,13 +70,14 @@ await sleep(2500)
 await shot('03-playback')
 await clickText('.playback .btn', '❚❚')
 
-for (const tab of ['Flotila', 'Podmínky', 'Složky', 'Pokrytí', 'Vrstvy']) {
-  await clickText('.tabs button', tab)
+await clickText('.tabs.main button', 'Nastavení')
+for (const tab of ['Flotila', 'Počasí', 'Složky', 'Pokrytí', 'Mapa']) {
+  await clickText('.tabs.sub button', tab)
   await sleep(400)
   await shot('04-tab-' + tab.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())
 }
 // optimisation
-await clickText('.tabs button', 'Pokrytí')
+await clickText('.tabs.sub button', 'Pokrytí')
 await clickText('.btn.primary', 'Najít')
 await page.waitForFunction(() => [...document.querySelectorAll('.btn.primary')].some((b) => b.textContent.trim().startsWith('Použít')), { timeout: 120000 }).catch(() => problems.push('[check] optimalizace nedoběhla'))
 report.optimise = await text('.picks')
@@ -88,15 +89,18 @@ report.afterApply = await page.evaluate(() => document.querySelector('.stat-valu
 await shot('06-applied')
 
 // weather preset → winter
-await clickText('.tabs button', 'Podmínky')
+await clickText('.tabs.sub button', 'Počasí')
 await page.select('.section-body select', 'winter')
 await page.waitForFunction(() => !document.querySelector('.dashboard.busy'), { timeout: 60000 })
 await sleep(800)
 report.winter = await text('.headline')
 await shot('07-winter')
 
-for (const [label, name] of [['Letouny', 'drones'], ['Zdroje', 'sources'], ['Uložit', 'compare']]) {
-  await clickText('.top-actions .btn', label)
+for (const [label, name] of [['Porovnat letouny', 'drones'], ['Zdroje', 'sources'], ['Uložit', 'compare']]) {
+  if (name === 'drones') {
+    await clickText('.tabs.sub button', 'Flotila')
+    await clickText('.section .btn', label)
+  } else await clickText('.top-actions .btn', label)
   await sleep(500)
   await shot('08-modal-' + name)
   if (name === 'compare') {

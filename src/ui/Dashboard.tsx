@@ -6,9 +6,9 @@ import { DISCLAIMER } from '../data/notes'
 import { formatDuration } from '../sim/stats'
 import { Info } from './bits'
 
-function Stat({ label, value, sub, info, flag, onClick }: { label: string; value: string; sub?: string; info: string; flag?: boolean; onClick?: () => void }) {
+function Stat({ label, value, sub, info, flag, onClick, extra }: { label: string; value: string; sub?: string; info: string; flag?: boolean; onClick?: () => void; extra?: boolean }) {
   return (
-    <div className={'stat' + (onClick ? ' clickable' : '')} onClick={onClick}>
+    <div className={'stat' + (onClick ? ' clickable' : '') + (extra ? ' extra' : '')} onClick={onClick}>
       <span className="stat-label">
         {label}
         <Info text={info} />
@@ -24,6 +24,7 @@ export function Dashboard() {
   const metrics = useApp((s) => s.metrics)
   const analysis = useApp((s) => s.analysis)
   const set = useApp((s) => s.set)
+  const open = useApp((s) => s.statsOpen)
   const fleet = fleetCounts(config)
   const cost = scenarioCost(config)
   const rate = config.costs.eurCzk
@@ -32,9 +33,9 @@ export function Dashboard() {
   const busy = analysis.status === 'running' || analysis.stale
 
   return (
-    <div className={'dashboard' + (busy ? ' busy' : '')} aria-busy={busy}>
+    <div className={'dashboard' + (busy ? ' busy' : '') + (open ? ' open' : '')} aria-busy={busy}>
       <div className="dash-status" aria-live="polite">
-        <span className="dash-title">Statistiky pokrytí</span>
+        <span className="dash-title">Celé území · pokrytí do {T} min</span>
         {analysis.status === 'error' ? (
           <span className="status bad">✕ Výpočet selhal</span>
         ) : busy || !m ? (
@@ -47,16 +48,21 @@ export function Dashboard() {
         <span className="dash-disclaimer" title={DISCLAIMER}>
           Simulované odhady – nejde o dispečerský systém ani o doklad klinického přínosu
         </span>
+        <button className="link-btn text dash-toggle" aria-expanded={open} onClick={() => set({ statsOpen: !open })}>
+          {open ? 'Jen hlavní ▾' : 'Všechny ukazatele ▴'}
+        </button>
       </div>
       <div className="stats">
         <Stat
           label="Flotila"
+          extra
           value={plural(fleet.dronesReady, 'dron', 'drony', 'dronů')}
           sub={`${plural(fleet.basesOperational, 'funkční základna', 'funkční základny', 'funkčních základen')}${fleet.drones > fleet.dronesReady ? ` · ${fleet.drones - fleet.dronesReady} mimo provoz` : ''}`}
           info="Drony označené jako připravené a základny s alespoň jedním připraveným dronem. Nastavuje se v záložce Flotila."
         />
         <Stat
           label="Roční náklady flotily"
+          extra
           value={cost.drones ? czk(cost.annualEur, rate) : '—'}
           sub={cost.drones ? `pořízení ${czk(cost.purchaseEur, rate)}${cost.hasPlaceholder ? ' · ⚠ odhad ceny' : ''}` : 'žádné drony'}
           info={
@@ -82,6 +88,7 @@ export function Dashboard() {
             />
             <Stat
               label={`Plocha do ${T} min`}
+          extra
               value={pct(m.areaWithin, m.areaCells)}
               sub={`${num(m.areaWithin * m.cellKm2)} z ${num(m.areaCells * m.cellKm2)} km² · ${config.analysis.fieldSite === 'open' ? 'přistání možné' : 'jen naviják/shoz'}`}
               info={`Podíl buněk 300 m v zájmovém území dosažitelných v cílovém čase za předpokladu, že ${config.analysis.fieldSite === 'open' ? 'všude lze přistát' : 'nikde nelze přistát'}. Jde jen o plošné pokrytí – neříká nic o tom, kde jsou lidé.`}
@@ -107,6 +114,7 @@ export function Dashboard() {
             />
             <Stat
               label="Nelze obsloužit"
+          extra
               value={num(m.locationsUnserved)}
               sub={m.unservedReasons.length ? m.unservedReasons.slice(0, 2).map((r) => `${REASON_LABEL[r.reason]} ${r.count}`).join(' · ') : 'všechna místa obsloužitelná'}
               info="Sledovaná místa, která při současném počasí, doletu, nákladu a způsobu doručení neobslouží žádný dron flotily, s nejčastějšími důvody."
@@ -114,12 +122,14 @@ export function Dashboard() {
             />
             <Stat
               label="Záložní pokrytí"
+          extra
               value={pct(m.locationsTwoBases, m.locations)}
               sub="dosažitelné ze ≥ 2 základen"
               info="Podíl sledovaných míst, která dokážou obsloužit alespoň dvě různé základny (ne nutně v cílovém čase). Ukazuje odolnost, když je nejbližší dron obsazen."
             />
             <Stat
               label="Vytížení flotily"
+          extra
               value={m.alertsPerYear > 0 && isFinite(m.meanCycleMin) ? `${num(m.utilisation * 100, 2)} %` : '—'}
               sub={m.alertsPerYear > 0 && isFinite(m.meanCycleMin) ? `všechny drony obsazeny u ${num(m.pAllBusy * 100, 3)} % výzev` : 'vyžaduje sídla a flotilu'}
               info={`Hrubý odhad. Předpokládá ${config.analysis.alertsPer100k} výzev vhodných pro dron na 100 000 obyvatel ročně (řádově podle švédské studie: 211 výzev na asi 200 000 lidí za 11 měsíců) → ${num(m.alertsPerYear)} výzev ročně; průměrný cyklus letu ${isFinite(m.meanCycleMin) ? num(m.meanCycleMin) : '—'} min včetně přípravy; Erlang B se všemi připravenými drony dohromady. Výzvy spojené s návštěvníky nejsou zahrnuty.`}
